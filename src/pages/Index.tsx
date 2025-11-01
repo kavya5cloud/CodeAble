@@ -4,8 +4,6 @@ import { OutputConsole } from "@/components/OutputConsole";
 import { ControlPanel } from "@/components/ControlPanel";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { toast } from "sonner";
-import { Code2 } from "lucide-react";
-
 const Index = () => {
   const [code, setCode] = useState("");
   const [output, setOutput] = useState<string[]>([]);
@@ -13,8 +11,9 @@ const Index = () => {
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [language, setLanguage] = useState("javascript");
   const [pyodideInstance, setPyodideInstance] = useState<any>(null);
-
-  const { speak } = useTextToSpeech(audioEnabled);
+  const {
+    speak
+  } = useTextToSpeech(audioEnabled);
 
   // Initialize Pyodide for Python execution
   useEffect(() => {
@@ -33,26 +32,22 @@ const Index = () => {
       loadPyodide();
     }
   }, [language, pyodideInstance]);
-
   const runCode = useCallback(async () => {
     setOutput([]);
     setError(null);
-
     try {
       if (language === "javascript") {
         // Override console.log to capture output
         const logs: string[] = [];
         const originalLog = console.log;
         console.log = (...args: any[]) => {
-          const message = args.map((arg) => String(arg)).join(" ");
+          const message = args.map(arg => String(arg)).join(" ");
           logs.push(message);
           originalLog.apply(console, args);
         };
-
         try {
           eval(code);
           setOutput(logs);
-
           if (logs.length > 0) {
             speak(`JavaScript executed successfully. Output: ${logs.join(". ")}`);
             toast.success("Code executed successfully");
@@ -69,7 +64,6 @@ const Index = () => {
           toast.error("Python environment is still loading");
           return;
         }
-
         try {
           // Capture Python stdout
           pyodideInstance.runPython(`
@@ -84,9 +78,7 @@ sys.stdout = StringIO()
           // Get output
           const pythonOutput = pyodideInstance.runPython("sys.stdout.getvalue()");
           const outputLines = pythonOutput ? pythonOutput.split("\n").filter((line: string) => line.trim()) : [];
-          
           setOutput(outputLines);
-
           if (outputLines.length > 0) {
             speak(`Python executed successfully. Output: ${outputLines.join(". ")}`);
             toast.success("Code executed successfully");
@@ -110,7 +102,6 @@ sys.stdout = StringIO()
       toast.error("Code execution failed");
     }
   }, [code, speak, language, pyodideInstance]);
-
   const clearCode = useCallback(() => {
     setCode("");
     setOutput([]);
@@ -118,7 +109,6 @@ sys.stdout = StringIO()
     speak("Code editor cleared");
     toast.info("Editor cleared");
   }, [speak]);
-
   const handleLanguageChange = useCallback((newLanguage: string) => {
     setLanguage(newLanguage);
     setCode("");
@@ -127,43 +117,31 @@ sys.stdout = StringIO()
     speak(`Switched to ${newLanguage}`);
     toast.info(`Language changed to ${newLanguage}`);
   }, [speak]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.ctrlKey && e.key === "Enter") {
-        e.preventDefault();
-        runCode();
-      } else if (e.ctrlKey && e.key === "k") {
-        e.preventDefault();
-        clearCode();
-      }
-    },
-    [runCode, clearCode]
-  );
-
-  const handleAudioToggle = useCallback(
-    (enabled: boolean) => {
-      setAudioEnabled(enabled);
-      speak(enabled ? "Audio feedback enabled" : "Audio feedback disabled");
-      toast.info(enabled ? "Audio feedback enabled" : "Audio feedback disabled");
-    },
-    [speak]
-  );
-
-  return (
-    <div className="min-h-screen bg-background text-foreground">
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.ctrlKey && e.key === "Enter") {
+      e.preventDefault();
+      runCode();
+    } else if (e.ctrlKey && e.key === "k") {
+      e.preventDefault();
+      clearCode();
+    }
+  }, [runCode, clearCode]);
+  const handleAudioToggle = useCallback((enabled: boolean) => {
+    setAudioEnabled(enabled);
+    speak(enabled ? "Audio feedback enabled" : "Audio feedback disabled");
+    toast.info(enabled ? "Audio feedback enabled" : "Audio feedback disabled");
+  }, [speak]);
+  return <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="border-b-2 border-border bg-card">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center gap-3">
-            <Code2 className="h-10 w-10 text-primary" aria-hidden="true" />
+            
             <div>
               <h1 className="text-4xl font-bold text-primary">
                 CodeAble
               </h1>
-              <p className="text-muted-foreground text-lg">
-                Accessible JavaScript Code Editor
-              </p>
+              <p className="text-muted-foreground text-lg">Accessible Code Editor for all minds</p>
             </div>
           </div>
         </div>
@@ -171,43 +149,23 @@ sys.stdout = StringIO()
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <div
-          className="space-y-6"
-          role="main"
-          aria-label="Code editor workspace"
-        >
+        <div className="space-y-6" role="main" aria-label="Code editor workspace">
           {/* Screen reader announcement for keyboard shortcuts */}
           <div className="sr-only" role="status" aria-live="polite">
             Welcome to CodeAble. Use Control plus Enter to run code, Control plus K to clear the editor.
           </div>
 
           {/* Control Panel */}
-          <ControlPanel
-            onRun={runCode}
-            onClear={clearCode}
-            audioEnabled={audioEnabled}
-            onAudioToggle={handleAudioToggle}
-            language={language}
-            onLanguageChange={handleLanguageChange}
-          />
+          <ControlPanel onRun={runCode} onClear={clearCode} audioEnabled={audioEnabled} onAudioToggle={handleAudioToggle} language={language} onLanguageChange={handleLanguageChange} />
 
           {/* Editor and Output Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[600px]">
-            <CodeEditor
-              code={code}
-              onChange={setCode}
-              onKeyDown={handleKeyDown}
-              language={language}
-            />
+            <CodeEditor code={code} onChange={setCode} onKeyDown={handleKeyDown} language={language} />
             <OutputConsole output={output} error={error} htmlCode={language === "html" ? code : undefined} />
           </div>
 
           {/* Keyboard Shortcuts Info */}
-          <div
-            className="bg-card border-2 border-border rounded-md p-4"
-            role="region"
-            aria-label="Keyboard shortcuts"
-          >
+          <div className="bg-card border-2 border-border rounded-md p-4" role="region" aria-label="Keyboard shortcuts">
             <h2 className="text-xl font-semibold mb-3 text-primary">
               Keyboard Shortcuts
             </h2>
@@ -234,8 +192,6 @@ sys.stdout = StringIO()
           </div>
         </div>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
