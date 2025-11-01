@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { CodeEditor } from "@/components/CodeEditor";
 import { OutputConsole } from "@/components/OutputConsole";
 import { ControlPanel } from "@/components/ControlPanel";
@@ -11,44 +11,105 @@ const Index = () => {
   const [output, setOutput] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [audioEnabled, setAudioEnabled] = useState(true);
+  const [language, setLanguage] = useState("javascript");
+  const [pyodideInstance, setPyodideInstance] = useState<any>(null);
 
   const { speak } = useTextToSpeech(audioEnabled);
 
-  const runCode = useCallback(() => {
+  // Initialize Pyodide for Python execution
+  useEffect(() => {
+    if (language === "python" && !pyodideInstance) {
+      const loadPyodide = async () => {
+        try {
+          // @ts-ignore
+          const pyodide = await window.loadPyodide({
+            indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/"
+          });
+          setPyodideInstance(pyodide);
+        } catch (err) {
+          console.error("Failed to load Pyodide:", err);
+        }
+      };
+      loadPyodide();
+    }
+  }, [language, pyodideInstance]);
+
+  const runCode = useCallback(async () => {
     setOutput([]);
     setError(null);
 
-    // Override console.log to capture output
-    const logs: string[] = [];
-    const originalLog = console.log;
-    console.log = (...args: any[]) => {
-      const message = args.map((arg) => String(arg)).join(" ");
-      logs.push(message);
-      originalLog.apply(console, args);
-    };
-
     try {
-      // Execute the code
-      eval(code);
-      setOutput(logs);
+      if (language === "javascript") {
+        // Override console.log to capture output
+        const logs: string[] = [];
+        const originalLog = console.log;
+        console.log = (...args: any[]) => {
+          const message = args.map((arg) => String(arg)).join(" ");
+          logs.push(message);
+          originalLog.apply(console, args);
+        };
 
-      if (logs.length > 0) {
-        speak(`Code executed successfully. Output: ${logs.join(". ")}`);
-        toast.success("Code executed successfully");
-      } else {
-        speak("Code executed successfully with no output");
-        toast.success("Code executed successfully");
+        try {
+          eval(code);
+          setOutput(logs);
+
+          if (logs.length > 0) {
+            speak(`JavaScript executed successfully. Output: ${logs.join(". ")}`);
+            toast.success("Code executed successfully");
+          } else {
+            speak("JavaScript executed successfully with no output");
+            toast.success("Code executed successfully");
+          }
+        } finally {
+          console.log = originalLog;
+        }
+      } else if (language === "python") {
+        if (!pyodideInstance) {
+          speak("Python environment is loading, please wait");
+          toast.error("Python environment is still loading");
+          return;
+        }
+
+        try {
+          // Capture Python stdout
+          pyodideInstance.runPython(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+          `);
+
+          // Run user code
+          pyodideInstance.runPython(code);
+
+          // Get output
+          const pythonOutput = pyodideInstance.runPython("sys.stdout.getvalue()");
+          const outputLines = pythonOutput ? pythonOutput.split("\n").filter((line: string) => line.trim()) : [];
+          
+          setOutput(outputLines);
+
+          if (outputLines.length > 0) {
+            speak(`Python executed successfully. Output: ${outputLines.join(". ")}`);
+            toast.success("Code executed successfully");
+          } else {
+            speak("Python executed successfully with no output");
+            toast.success("Code executed successfully");
+          }
+        } catch (err: any) {
+          throw new Error(err.message || String(err));
+        }
+      } else if (language === "html") {
+        // For HTML, we'll display it in the output console as rendered HTML
+        setOutput([`[HTML Rendered Below]`]);
+        speak("HTML code rendered successfully");
+        toast.success("HTML rendered successfully");
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       setError(errorMessage);
       speak(`Error: ${errorMessage}`);
       toast.error("Code execution failed");
-    } finally {
-      // Restore console.log
-      console.log = originalLog;
     }
-  }, [code, speak]);
+  }, [code, speak, language, pyodideInstance]);
 
   const clearCode = useCallback(() => {
     setCode("");
@@ -56,6 +117,15 @@ const Index = () => {
     setError(null);
     speak("Code editor cleared");
     toast.info("Editor cleared");
+  }, [speak]);
+
+  const handleLanguageChange = useCallback((newLanguage: string) => {
+    setLanguage(newLanguage);
+    setCode("");
+    setOutput([]);
+    setError(null);
+    speak(`Switched to ${newLanguage}`);
+    toast.info(`Language changed to ${newLanguage}`);
   }, [speak]);
 
   const handleKeyDown = useCallback(
@@ -117,6 +187,8 @@ const Index = () => {
             onClear={clearCode}
             audioEnabled={audioEnabled}
             onAudioToggle={handleAudioToggle}
+            language={language}
+            onLanguageChange={handleLanguageChange}
           />
 
           {/* Editor and Output Grid */}
@@ -125,8 +197,9 @@ const Index = () => {
               code={code}
               onChange={setCode}
               onKeyDown={handleKeyDown}
+              language={language}
             />
-            <OutputConsole output={output} error={error} />
+            <OutputConsole output={output} error={error} htmlCode={language === "html" ? code : undefined} />
           </div>
 
           {/* Keyboard Shortcuts Info */}
