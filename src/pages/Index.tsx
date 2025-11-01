@@ -4,7 +4,7 @@ import { OutputConsole } from "@/components/OutputConsole";
 import { ControlPanel } from "@/components/ControlPanel";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { toast } from "sonner";
-import codeableIcon from "@/assets/codeable-icon.png";
+import { Code2 } from "lucide-react";
 
 const Index = () => {
   const [code, setCode] = useState("");
@@ -155,23 +155,14 @@ sys.stdout = StringIO()
       {/* Header */}
       <header className="border-b-2 border-border bg-card">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-4">
-            <img 
-              src={codeableIcon} 
-              alt="CodeAble Icon" 
-              className="h-12 w-auto"
-            />
-            <img 
-              src={codeableLogo} 
-              alt="CodeAble Logo" 
-              className="h-16 w-auto"
-            />
+          <div className="flex items-center gap-3">
+            <Code2 className="h-10 w-10 text-primary" aria-hidden="true" />
             <div>
-              <h1 className="sr-only">
+              <h1 className="text-4xl font-bold text-primary">
                 CodeAble
               </h1>
               <p className="text-muted-foreground text-lg">
-                Accessible Multi-Language Code Editor
+                Accessible JavaScript Code Editor
               </p>
             </div>
           </div>
