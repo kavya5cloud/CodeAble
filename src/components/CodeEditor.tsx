@@ -66,7 +66,7 @@ print('Hello, CodeAble!')`,
         spellCheck={false}
       />
       <div id="editor-instructions" className="sr-only">
-        This is the code editor. Type your JavaScript code here. Use Control plus Enter to execute the code, Control plus K to clear the editor, and Tab to navigate to the controls.
+        This is the code editor. Type your code here. Use Control plus Enter to execute the code, Control plus K to clear the editor, and Tab to navigate to the controls.
       </div>
     </div>
   );
