@@ -4,7 +4,6 @@ import { OutputConsole } from "@/components/OutputConsole";
 import { ControlPanel } from "@/components/ControlPanel";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { toast } from "sonner";
-import codeableLogo from "@/assets/codeable-logo.png";
 import codeableIcon from "@/assets/codeable-icon.png";
 
 const Index = () => {
