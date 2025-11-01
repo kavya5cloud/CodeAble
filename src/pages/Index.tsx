@@ -5,6 +5,7 @@ import { ControlPanel } from "@/components/ControlPanel";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { toast } from "sonner";
 import codeableLogo from "@/assets/codeable-logo.png";
+import codeableIcon from "@/assets/codeable-icon.png";
 
 const Index = () => {
   const [code, setCode] = useState("");
@@ -156,6 +157,11 @@ sys.stdout = StringIO()
       <header className="border-b-2 border-border bg-card">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center gap-4">
+            <img 
+              src={codeableIcon} 
+              alt="CodeAble Icon" 
+              className="h-12 w-auto"
+            />
             <img 
               src={codeableLogo} 
               alt="CodeAble Logo" 
