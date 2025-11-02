@@ -2,16 +2,28 @@ import { useState, useCallback, useEffect } from "react";
 import { CodeEditor } from "@/components/CodeEditor";
 import { OutputConsole } from "@/components/OutputConsole";
 import { ControlPanel } from "@/components/ControlPanel";
+import { FileManager, CodeFile } from "@/components/FileManager";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { toast } from "sonner";
 import codeableLogo from "@/assets/codeable-logo.png";
 const Index = () => {
-  const [code, setCode] = useState("");
+  const [files, setFiles] = useState<CodeFile[]>([
+    {
+      id: "1",
+      name: "untitled.js",
+      content: "",
+      language: "javascript",
+    },
+  ]);
+  const [currentFileId, setCurrentFileId] = useState("1");
   const [output, setOutput] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [audioEnabled, setAudioEnabled] = useState(true);
-  const [language, setLanguage] = useState("javascript");
   const [pyodideInstance, setPyodideInstance] = useState<any>(null);
+
+  const currentFile = files.find((f) => f.id === currentFileId) || files[0];
+  const code = currentFile.content;
+  const language = currentFile.language;
   const {
     speak
   } = useTextToSpeech(audioEnabled);
@@ -33,6 +45,14 @@ const Index = () => {
       loadPyodide();
     }
   }, [language, pyodideInstance]);
+  const updateCurrentFileContent = useCallback((newContent: string) => {
+    setFiles((prev) =>
+      prev.map((f) =>
+        f.id === currentFileId ? { ...f, content: newContent } : f
+      )
+    );
+  }, [currentFileId]);
+
   const runCode = useCallback(async () => {
     setOutput([]);
     setError(null);
@@ -104,20 +124,26 @@ sys.stdout = StringIO()
     }
   }, [code, speak, language, pyodideInstance]);
   const clearCode = useCallback(() => {
-    setCode("");
+    updateCurrentFileContent("");
     setOutput([]);
     setError(null);
     speak("Code editor cleared");
     toast.info("Editor cleared");
-  }, [speak]);
-  const handleLanguageChange = useCallback((newLanguage: string) => {
-    setLanguage(newLanguage);
-    setCode("");
-    setOutput([]);
-    setError(null);
-    speak(`Switched to ${newLanguage}`);
-    toast.info(`Language changed to ${newLanguage}`);
-  }, [speak]);
+  }, [speak, updateCurrentFileContent]);
+  const handleLanguageChange = useCallback(
+    (newLanguage: string) => {
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.id === currentFileId ? { ...f, language: newLanguage } : f
+        )
+      );
+      setOutput([]);
+      setError(null);
+      speak(`Switched to ${newLanguage}`);
+      toast.info(`Language changed to ${newLanguage}`);
+    },
+    [speak, currentFileId]
+  );
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.ctrlKey && e.key === "Enter") {
       e.preventDefault();
@@ -133,39 +159,48 @@ sys.stdout = StringIO()
     toast.info(enabled ? "Audio feedback enabled" : "Audio feedback disabled");
   }, [speak]);
 
-  const handleFileUpload = useCallback((file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      setCode(content);
-      
-      // Detect language from file extension
-      const extension = file.name.split('.').pop()?.toLowerCase();
-      let detectedLanguage = language;
-      
-      if (extension === 'js') {
-        detectedLanguage = 'javascript';
-      } else if (extension === 'py') {
-        detectedLanguage = 'python';
-      } else if (extension === 'html' || extension === 'css') {
-        detectedLanguage = 'html';
-      }
-      
-      if (detectedLanguage !== language) {
-        setLanguage(detectedLanguage);
-      }
-      
-      speak(`File ${file.name} uploaded successfully`);
-      toast.success(`File uploaded: ${file.name}`);
-    };
-    
-    reader.onerror = () => {
-      speak("Error reading file");
-      toast.error("Failed to read file");
-    };
-    
-    reader.readAsText(file);
-  }, [language, speak]);
+  const handleFileUpload = useCallback(
+    (file: File) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+
+        // Detect language from file extension
+        const extension = file.name.split(".").pop()?.toLowerCase();
+        let detectedLanguage = "javascript";
+
+        if (extension === "js") {
+          detectedLanguage = "javascript";
+        } else if (extension === "py") {
+          detectedLanguage = "python";
+        } else if (extension === "html" || extension === "css") {
+          detectedLanguage = "html";
+        }
+
+        // Create new file with uploaded content
+        const newFile: CodeFile = {
+          id: Date.now().toString(),
+          name: file.name,
+          content: content,
+          language: detectedLanguage,
+        };
+
+        setFiles((prev) => [...prev, newFile]);
+        setCurrentFileId(newFile.id);
+
+        speak(`File ${file.name} uploaded successfully`);
+        toast.success(`File uploaded: ${file.name}`);
+      };
+
+      reader.onerror = () => {
+        speak("Error reading file");
+        toast.error("Failed to read file");
+      };
+
+      reader.readAsText(file);
+    },
+    [speak]
+  );
 
   const handleFileDownload = useCallback(() => {
     if (!code.trim()) {
@@ -174,28 +209,68 @@ sys.stdout = StringIO()
       return;
     }
 
-    const extensions = {
-      javascript: 'js',
-      python: 'py',
-      html: 'html'
-    };
+    const fileName = currentFile.name;
 
-    const extension = extensions[language as keyof typeof extensions] || 'txt';
-    const fileName = `code.${extension}`;
-    
-    const blob = new Blob([code], { type: 'text/plain' });
+    const blob = new Blob([code], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    
+
     speak(`Code downloaded as ${fileName}`);
     toast.success(`Downloaded: ${fileName}`);
-  }, [code, language, speak]);
+  }, [code, currentFile.name, speak]);
+
+  const handleFileCreate = useCallback(() => {
+    const newFile: CodeFile = {
+      id: Date.now().toString(),
+      name: "untitled.js",
+      content: "",
+      language: "javascript",
+    };
+    setFiles((prev) => [...prev, newFile]);
+    setCurrentFileId(newFile.id);
+    setOutput([]);
+    setError(null);
+    speak("New file created");
+    toast.success("New file created");
+  }, [speak]);
+
+  const handleFileDelete = useCallback(
+    (fileId: string) => {
+      if (files.length === 1) {
+        toast.error("Cannot delete the last file");
+        return;
+      }
+
+      const fileToDelete = files.find((f) => f.id === fileId);
+      setFiles((prev) => prev.filter((f) => f.id !== fileId));
+
+      if (currentFileId === fileId) {
+        const remainingFiles = files.filter((f) => f.id !== fileId);
+        setCurrentFileId(remainingFiles[0].id);
+      }
+
+      speak(`File ${fileToDelete?.name} deleted`);
+      toast.success("File deleted");
+    },
+    [files, currentFileId, speak]
+  );
+
+  const handleFileRename = useCallback(
+    (fileId: string, newName: string) => {
+      setFiles((prev) =>
+        prev.map((f) => (f.id === fileId ? { ...f, name: newName } : f))
+      );
+      speak(`File renamed to ${newName}`);
+      toast.success("File renamed");
+    },
+    [speak]
+  );
   return <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="border-b-2 border-border bg-card">
@@ -237,9 +312,26 @@ sys.stdout = StringIO()
           />
 
           {/* Editor and Output Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[600px]">
-            <CodeEditor code={code} onChange={setCode} onKeyDown={handleKeyDown} language={language} />
-            <OutputConsole output={output} error={error} htmlCode={language === "html" ? code : undefined} />
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_1fr] gap-6 h-[600px]">
+            <FileManager
+              files={files}
+              currentFileId={currentFileId}
+              onFileSelect={setCurrentFileId}
+              onFileCreate={handleFileCreate}
+              onFileDelete={handleFileDelete}
+              onFileRename={handleFileRename}
+            />
+            <CodeEditor
+              code={code}
+              onChange={updateCurrentFileContent}
+              onKeyDown={handleKeyDown}
+              language={language}
+            />
+            <OutputConsole
+              output={output}
+              error={error}
+              htmlCode={language === "html" ? code : undefined}
+            />
           </div>
 
           {/* Keyboard Shortcuts Info */}
