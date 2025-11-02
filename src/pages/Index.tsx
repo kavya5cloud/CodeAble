@@ -111,7 +111,6 @@ sys.stdout = StringIO()
           throw new Error(err.message || String(err));
         }
       } else if (language === "html") {
-        // For HTML, we'll display it in the output console as rendered HTML
         setOutput([`[HTML Rendered Below]`]);
         speak("HTML code rendered successfully");
         toast.success("HTML rendered successfully");
