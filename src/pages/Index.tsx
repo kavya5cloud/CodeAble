@@ -4,6 +4,7 @@ import { OutputConsole } from "@/components/OutputConsole";
 import { ControlPanel } from "@/components/ControlPanel";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { toast } from "sonner";
+import codeableLogo from "@/assets/codeable-logo.png";
 const Index = () => {
   const [code, setCode] = useState("");
   const [output, setOutput] = useState<string[]>([]);
@@ -136,9 +137,13 @@ sys.stdout = StringIO()
       <header className="border-b-2 border-border bg-card">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center gap-3">
-            
+            <img 
+              src={codeableLogo} 
+              alt="CodeAble Logo" 
+              className="h-16 w-auto"
+            />
             <div>
-              <h1 className="text-4xl font-bold text-primary">
+              <h1 className="sr-only">
                 CodeAble
               </h1>
               <p className="text-muted-foreground text-lg">Accessible Code Editor for all minds</p>
