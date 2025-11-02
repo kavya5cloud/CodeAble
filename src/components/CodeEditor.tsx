@@ -46,11 +46,8 @@ print('Hello, CodeAble!')`,
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <label
-        htmlFor="code-editor"
-        className="text-sm font-semibold mb-2 text-foreground"
-      >
+    <div className="flex-1 flex flex-col">
+      <label htmlFor="code-editor" className="sr-only">
         {language === 'javascript' ? 'JavaScript' : language === 'python' ? 'Python' : 'HTML/CSS'} Code Editor
       </label>
       <Textarea

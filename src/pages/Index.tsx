@@ -312,21 +312,23 @@ sys.stdout = StringIO()
           />
 
           {/* Editor and Output Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_1fr] gap-6 h-[600px]">
-            <FileManager
-              files={files}
-              currentFileId={currentFileId}
-              onFileSelect={setCurrentFileId}
-              onFileCreate={handleFileCreate}
-              onFileDelete={handleFileDelete}
-              onFileRename={handleFileRename}
-            />
-            <CodeEditor
-              code={code}
-              onChange={updateCurrentFileContent}
-              onKeyDown={handleKeyDown}
-              language={language}
-            />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="flex flex-col h-[600px]">
+              <FileManager
+                files={files}
+                currentFileId={currentFileId}
+                onFileSelect={setCurrentFileId}
+                onFileCreate={handleFileCreate}
+                onFileDelete={handleFileDelete}
+                onFileRename={handleFileRename}
+              />
+              <CodeEditor
+                code={code}
+                onChange={updateCurrentFileContent}
+                onKeyDown={handleKeyDown}
+                language={language}
+              />
+            </div>
             <OutputConsole
               output={output}
               error={error}
