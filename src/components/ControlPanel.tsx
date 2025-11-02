@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Play, Trash2, Volume2, VolumeX } from "lucide-react";
+import { Play, Trash2, Volume2, VolumeX, Upload, Download } from "lucide-react";
 
 interface ControlPanelProps {
   onRun: () => void;
@@ -11,6 +11,8 @@ interface ControlPanelProps {
   onAudioToggle: (enabled: boolean) => void;
   language: string;
   onLanguageChange: (language: string) => void;
+  onUpload: (file: File) => void;
+  onDownload: () => void;
 }
 
 export const ControlPanel = ({
@@ -20,7 +22,17 @@ export const ControlPanel = ({
   onAudioToggle,
   language,
   onLanguageChange,
+  onUpload,
+  onDownload,
 }: ControlPanelProps) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onUpload(file);
+    }
+    // Reset input so same file can be uploaded again
+    e.target.value = '';
+  };
   return (
     <div
       className="flex flex-wrap gap-4 items-center bg-card border-2 border-border rounded-md p-4"
@@ -63,6 +75,38 @@ export const ControlPanel = ({
         <Trash2 className="h-5 w-5" aria-hidden="true" />
         Clear
       </Button>
+
+      <div className="flex items-center gap-2">
+        <input
+          type="file"
+          id="file-upload"
+          className="sr-only"
+          accept=".js,.py,.html,.css,.txt"
+          onChange={handleFileUpload}
+          aria-label="Upload code file"
+        />
+        <Button
+          size="lg"
+          variant="outline"
+          className="gap-2 focus:ring-4 focus:ring-primary/50 transition-all"
+          onClick={() => document.getElementById('file-upload')?.click()}
+          aria-label="Upload code file"
+        >
+          <Upload className="h-5 w-5" aria-hidden="true" />
+          Upload
+        </Button>
+
+        <Button
+          onClick={onDownload}
+          size="lg"
+          variant="outline"
+          className="gap-2 focus:ring-4 focus:ring-primary/50 transition-all"
+          aria-label="Download code file"
+        >
+          <Download className="h-5 w-5" aria-hidden="true" />
+          Download
+        </Button>
+      </div>
 
       <div className="flex items-center gap-3 ml-auto">
         <Label

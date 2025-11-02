@@ -132,6 +132,70 @@ sys.stdout = StringIO()
     speak(enabled ? "Audio feedback enabled" : "Audio feedback disabled");
     toast.info(enabled ? "Audio feedback enabled" : "Audio feedback disabled");
   }, [speak]);
+
+  const handleFileUpload = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      setCode(content);
+      
+      // Detect language from file extension
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      let detectedLanguage = language;
+      
+      if (extension === 'js') {
+        detectedLanguage = 'javascript';
+      } else if (extension === 'py') {
+        detectedLanguage = 'python';
+      } else if (extension === 'html' || extension === 'css') {
+        detectedLanguage = 'html';
+      }
+      
+      if (detectedLanguage !== language) {
+        setLanguage(detectedLanguage);
+      }
+      
+      speak(`File ${file.name} uploaded successfully`);
+      toast.success(`File uploaded: ${file.name}`);
+    };
+    
+    reader.onerror = () => {
+      speak("Error reading file");
+      toast.error("Failed to read file");
+    };
+    
+    reader.readAsText(file);
+  }, [language, speak]);
+
+  const handleFileDownload = useCallback(() => {
+    if (!code.trim()) {
+      speak("No code to download");
+      toast.error("Editor is empty");
+      return;
+    }
+
+    const extensions = {
+      javascript: 'js',
+      python: 'py',
+      html: 'html'
+    };
+
+    const extension = extensions[language as keyof typeof extensions] || 'txt';
+    const fileName = `code.${extension}`;
+    
+    const blob = new Blob([code], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    speak(`Code downloaded as ${fileName}`);
+    toast.success(`Downloaded: ${fileName}`);
+  }, [code, language, speak]);
   return <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="border-b-2 border-border bg-card">
@@ -161,7 +225,16 @@ sys.stdout = StringIO()
           </div>
 
           {/* Control Panel */}
-          <ControlPanel onRun={runCode} onClear={clearCode} audioEnabled={audioEnabled} onAudioToggle={handleAudioToggle} language={language} onLanguageChange={handleLanguageChange} />
+          <ControlPanel 
+            onRun={runCode} 
+            onClear={clearCode} 
+            audioEnabled={audioEnabled} 
+            onAudioToggle={handleAudioToggle} 
+            language={language} 
+            onLanguageChange={handleLanguageChange}
+            onUpload={handleFileUpload}
+            onDownload={handleFileDownload}
+          />
 
           {/* Editor and Output Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[600px]">
