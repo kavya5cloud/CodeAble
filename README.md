@@ -2,7 +2,7 @@
 
 # Accessible Code Editor for Visually Impaired Users
 
-# Overview
+# Overview 
 
 The **Accessible Code Editor** is a browser-based coding environment designed to empower visually impaired (VI) users to write, run, and test JavaScript code using keyboard navigation and audio feedback. Built with accessibility-first principles, the platform ensures that users can interact seamlessly with the interface through screen readers, voice prompts, and simple controls.
 
