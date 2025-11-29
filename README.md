@@ -14,7 +14,7 @@ The **Accessible Code Editor** is a browser-based coding environment designed to
 * 🗣️ **Text-to-Speech (TTS)** — Audio feedback for syntax errors and program output
 * 💬 **ARIA & Live Regions** — Fully screen reader compatible (JAWS, NVDA)
 * 🧠 **JavaScript Execution** — Evaluate code securely in-browser using `eval()`
-* 🎛️ **Audio Toggle** — Turn spoken feedback on or off as needed
+* 🎛️ **Audio Toggle** — Turn spoken feedback on or off as needed  
 * 🧪 **Future-Ready** — Supports future integration of Python, AI code assistant, and Braille output
 
 ---
