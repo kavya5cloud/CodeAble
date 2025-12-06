@@ -10,7 +10,7 @@ The **Accessible Code Editor** is a browser-based coding environment designed to
 
 ##  Features
 
-* ✅ **Accessible UI** — High-contrast design, large fonts, and keyboard-first navigation
+* ✅ **Accessible UI** — High-contrast design, large fonts, and keyboard-first navigation 
 * 🗣️ **Text-to-Speech (TTS)** — Audio feedback for syntax errors and program output
 * 💬 **ARIA & Live Regions** — Fully screen reader compatible (JAWS, NVDA)
 * 🧠 **JavaScript Execution** — Evaluate code securely in-browser using `eval()`
